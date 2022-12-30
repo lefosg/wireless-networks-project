@@ -1,5 +1,8 @@
 import java.io.Serializable;
 
+/**
+ * Wrapper class for sending files to the client
+ */
 public class MultiMediaFile implements Serializable {
 
     private String fileName;

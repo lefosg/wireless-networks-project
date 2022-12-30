@@ -3,7 +3,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.DatagramSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -21,10 +20,10 @@ public class Server {
     }
 
     public Server() {
-        try (final DatagramSocket socket = new DatagramSocket()) {
+        try (final DatagramSocket datagramSocket = new DatagramSocket()) {
             this.serverSocket = new ServerSocket(this.PORT);
-            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
-            this.ip = socket.getLocalAddress().getHostAddress();
+            datagramSocket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            this.ip = datagramSocket.getLocalAddress().getHostAddress();
             System.out.println("Server is running on " + ip + ":" + this.PORT);
 
             this.numberOfFiles = getNumberOfFiles();
@@ -81,9 +80,11 @@ public class Server {
 
         if (id.equals("A")) {
             //if it's server_A it sends the first files n_a files
-            for (int i = 1; i <= 160; i+=n_b+1) {
-                String index = i < 100 ? i < 10? "00"+i : "0"+i : String.valueOf(i);
-                file_names.add("s" + index + ".m4s");
+            for (int i = 1; i <= numberOfFiles; i+=n_b+n_a) {
+                for (int j = i; j < i+n_a; j++) {
+                    String index = j < 100 ? j < 10? "00"+(j) : "0"+(j) : String.valueOf(j);
+                    file_names.add("s" + index + ".m4s");
+                }
             }
         } else if (id.equals("B")) {
             //if it's server_B it means server_A sends the first n_a files, so server_B must calculate the rest

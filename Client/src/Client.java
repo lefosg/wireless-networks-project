@@ -4,6 +4,8 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Client {
     private Socket socket_A, socket_B;
@@ -12,6 +14,7 @@ public class Client {
     private int n_A, n_B, PORT = 7000;  //default port to 7000
     private String IP_A, IP_B;
     private final String pathOfFiles = "./Client/files/";
+    private Map<Character, Double> serverToTime;
 
     public static void main(String[] args) {
         if (args.length != 4) {
@@ -31,13 +34,14 @@ public class Client {
         System.out.println("IP_B: " + IP_B);
 
         Client client = new Client(n_A, n_B, IP_A, IP_B);
-        client.init();
+        client.init("A", client.reader_A, client.writer_A);
+        //client.init("B", client.reader_B, client.writer_B);
 
     }
 
     /**
-     * @param n_a number of files to ask from server A
-     * @param n_b number of files to ask from server B
+     * @param n_a number of files to ask sequentially from server A
+     * @param n_b number of files to ask sequentially from server B
      * @param ip_a IP address of server A
      * @param ip_b IP address of server B
      */
@@ -58,29 +62,38 @@ public class Client {
             writer_B = new ObjectOutputStream(socket_B.getOutputStream());
             reader_B = new ObjectInputStream(socket_B.getInputStream());
              */
+
+            serverToTime = new HashMap<Character, Double>();
         } catch (Exception e) {
             System.err.println(e);
         }
     }
 
-    private void init() {
-            String server_id = "A";
-        try {
-            String first_msg = n_A + " " + n_B + " " + server_id;
-            writer_A.writeObject(first_msg);
+    private void init(String s_id, ObjectInputStream reader, ObjectOutputStream writer) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                double time_start = 0, time_end;
+                try {
+                    String first_msg = n_A + " " + n_B + " " + s_id;
+                    writer.writeObject(first_msg);
+                    time_start = System.currentTimeMillis();
+                    //the server sends an empty MultiMediaFile object in order to cause an exception in this loop, and exit
+                    while (true) {
+                        MultiMediaFile file = (MultiMediaFile) reader.readObject();
+                        System.out.println(file.getFileName());
+                        Path new_file_path = Paths.get(pathOfFiles + file.getFileName());
+                        //Files.write(new_file_path, file.getFileBuffer());
+                    }
 
-            //the server sends an empty MultiMediaFile object in order to cause an exception in this loop, and exit
-            while (true) {
-                MultiMediaFile file = (MultiMediaFile) reader_A.readObject();
-                System.out.println(file.getFileName());
-                Path new_file_path = Paths.get(pathOfFiles + file.getFileName());
-                Files.write(new_file_path, file.getFileBuffer());
+                } catch (ClassCastException e) {
+                    time_end = (System.currentTimeMillis() - time_start)/1000.0;  //division returns seconds
+                    serverToTime.put(s_id.charAt(0), time_end);
+                    System.out.println("Finished receiving from server_" + s_id + " in " + time_end + " seconds");
+                } catch (Exception e) {
+                    System.err.println(e);
+                }
             }
-
-        } catch (ClassCastException e) {
-            System.out.println("Finished receiving from server_"+server_id);
-        } catch (Exception e) {
-            System.err.println(e);
-        }
+        }).start();
     }
 }

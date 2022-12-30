@@ -1,3 +1,5 @@
+import com.wirelessnetworks.multimediafile.MultiMediaFile;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -5,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
 
 public class Client {
     private Socket socket_A, socket_B;
@@ -34,7 +37,7 @@ public class Client {
 
         //initiate transactions with the servers
         Client client = new Client(n_A, n_B, IP_A, IP_B);
-        client.init("A", client.reader_A, client.writer_A);
+        //client.init("A", client.reader_A, client.writer_A);
         client.init("B", client.reader_B, client.writer_B);
 
         while (client.serverToTime.keySet().size() != 2) {
@@ -53,7 +56,9 @@ public class Client {
             long lines = 0;
             BufferedReader reader = new BufferedReader(new FileReader(output_file));
             while (reader.readLine() != null) lines++;
-            System.out.println("lines in output_file: " + lines);
+            System.out.println();
+            System.out.println("Writing results to results.csv");
+            System.out.println("Lines in output_file.csv: " + lines);
             reader.close();
 
             //write to the output_file
@@ -85,14 +90,14 @@ public class Client {
             //initialize socket for server_A
             this.n_A = n_a;
             this.IP_A = ip_a;
-            this.socket_A = new Socket(ip_a, PORT);
-            writer_A = new ObjectOutputStream(socket_A.getOutputStream());
-            reader_A = new ObjectInputStream(socket_A.getInputStream());
+//            this.socket_A = new Socket(ip_a, PORT);
+//            writer_A = new ObjectOutputStream(socket_A.getOutputStream());
+//            reader_A = new ObjectInputStream(socket_A.getInputStream());
 
             //initialize socket for server_B
             this.n_B = n_b;
             this.IP_B = ip_b;
-            socket_B = new Socket(ip_b, PORT+1);
+            socket_B = new Socket(ip_b, PORT);
             writer_B = new ObjectOutputStream(socket_B.getOutputStream());
             reader_B = new ObjectInputStream(socket_B.getInputStream());
 
@@ -115,8 +120,9 @@ public class Client {
                     while (true) {
                         MultiMediaFile file = (MultiMediaFile) reader.readObject();
                         System.out.println(file.getFileName() + " : s_id " + s_id);
+                        //write the files
                         Path new_file_path = Paths.get(pathOfFiles + file.getFileName());
-                        //Files.write(new_file_path, file.getFileBuffer());
+                        Files.write(new_file_path, file.getFileBuffer());
                     }
 
                 } catch (ClassCastException e) {

@@ -1,6 +1,9 @@
 import java.net.Socket;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Client {
     private Socket socket_A, socket_B;
@@ -8,6 +11,7 @@ public class Client {
     private ObjectOutputStream writer_A, writer_B;
     private int n_A, n_B, PORT = 7000;  //default port to 7000
     private String IP_A, IP_B;
+    private final String pathOfFiles = "./Client/files/";
 
     public static void main(String[] args) {
         if (args.length != 4) {
@@ -20,13 +24,13 @@ public class Client {
         String IP_A = args[2];
         String IP_B = args[3];
 
-        System.out.println(n_A);
-        System.out.println(n_B);
-        System.out.println(IP_A);
-        System.out.println(IP_B);
+        System.out.println("Client parameters");
+        System.out.println("n_A: " + n_A);
+        System.out.println("n_B: " + n_B);
+        System.out.println("IP_A: " + IP_A);
+        System.out.println("IP_B: " + IP_B);
 
         Client client = new Client(n_A, n_B, IP_A, IP_B);
-
         client.init();
 
     }
@@ -60,19 +64,23 @@ public class Client {
     }
 
     private void init() {
+            String server_id = "A";
         try {
-            String first_msg = n_A + " A";
+            String first_msg = n_A + " " + n_B + " " + server_id;
             writer_A.writeObject(first_msg);
 
+            //the server sends an empty MultiMediaFile object in order to cause an exception in this loop, and exit
             while (true) {
-
                 MultiMediaFile file = (MultiMediaFile) reader_A.readObject();
-
-
+                System.out.println(file.getFileName());
+                Path new_file_path = Paths.get(pathOfFiles + file.getFileName());
+                Files.write(new_file_path, file.getFileBuffer());
             }
 
+        } catch (ClassCastException e) {
+            System.out.println("Finished receiving from server_"+server_id);
         } catch (Exception e) {
-
+            System.err.println(e);
         }
     }
 }

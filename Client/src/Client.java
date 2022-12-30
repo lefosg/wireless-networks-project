@@ -1,6 +1,5 @@
+import java.io.*;
 import java.net.Socket;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,10 +32,46 @@ public class Client {
         System.out.println("IP_A: " + IP_A);
         System.out.println("IP_B: " + IP_B);
 
+        //initiate transactions with the servers
         Client client = new Client(n_A, n_B, IP_A, IP_B);
         client.init("A", client.reader_A, client.writer_A);
-        //client.init("B", client.reader_B, client.writer_B);
+        client.init("B", client.reader_B, client.writer_B);
 
+        while (client.serverToTime.keySet().size() != 2) {
+            //block until both threads have added the finish times
+        }
+
+        //write the results to a csv file
+        try {
+            File output_file = new File("./Client/results.csv");
+            if (output_file.createNewFile()) { //create file if not exists. if it exists it won't do anything
+                System.out.println("Created the file");
+                //if file is created now, write headers ID,A,B
+            }
+
+            //get number of lines of the output_file
+            long lines = 0;
+            BufferedReader reader = new BufferedReader(new FileReader(output_file));
+            while (reader.readLine() != null) lines++;
+            System.out.println("lines in output_file: " + lines);
+            reader.close();
+
+            //write to the output_file
+            PrintWriter printWriter = new PrintWriter(new FileWriter(output_file, true));  //true for append
+            //write header to the file it was created now
+            if(lines == 0) {
+                printWriter.println("ID,A,B");
+                lines++;
+            }
+
+            //write results
+            printWriter.append(lines + "," + client.serverToTime.get('A') + "," + client.serverToTime.get('B'));
+            printWriter.println();
+            printWriter.close();
+
+        } catch (Exception e) {
+            System.err.println(e);
+        }
     }
 
     /**
@@ -57,11 +92,9 @@ public class Client {
             //initialize socket for server_B
             this.n_B = n_b;
             this.IP_B = ip_b;
-            /**
-            socket_B = new Socket(ip_b, PORT);
+            socket_B = new Socket(ip_b, PORT+1);
             writer_B = new ObjectOutputStream(socket_B.getOutputStream());
             reader_B = new ObjectInputStream(socket_B.getInputStream());
-             */
 
             serverToTime = new HashMap<Character, Double>();
         } catch (Exception e) {
@@ -81,13 +114,14 @@ public class Client {
                     //the server sends an empty MultiMediaFile object in order to cause an exception in this loop, and exit
                     while (true) {
                         MultiMediaFile file = (MultiMediaFile) reader.readObject();
-                        System.out.println(file.getFileName());
+                        System.out.println(file.getFileName() + " : s_id " + s_id);
                         Path new_file_path = Paths.get(pathOfFiles + file.getFileName());
                         //Files.write(new_file_path, file.getFileBuffer());
                     }
 
                 } catch (ClassCastException e) {
                     time_end = (System.currentTimeMillis() - time_start)/1000.0;  //division returns seconds
+                    time_end =  Math.round(time_end * 100.0) / 100.0;  //round up to 2 decimals
                     serverToTime.put(s_id.charAt(0), time_end);
                     System.out.println("Finished receiving from server_" + s_id + " in " + time_end + " seconds");
                 } catch (Exception e) {

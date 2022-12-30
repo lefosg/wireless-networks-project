@@ -37,7 +37,7 @@ public class Client {
 
         //initiate transactions with the servers
         Client client = new Client(n_A, n_B, IP_A, IP_B);
-        //client.init("A", client.reader_A, client.writer_A);
+        client.init("A", client.reader_A, client.writer_A);
         client.init("B", client.reader_B, client.writer_B);
 
         while (client.serverToTime.keySet().size() != 2) {
@@ -90,17 +90,26 @@ public class Client {
             //initialize socket for server_A
             this.n_A = n_a;
             this.IP_A = ip_a;
-//            this.socket_A = new Socket(ip_a, PORT);
-//            writer_A = new ObjectOutputStream(socket_A.getOutputStream());
-//            reader_A = new ObjectInputStream(socket_A.getInputStream());
+            try {
+                this.socket_A = new Socket(ip_a, PORT);
+                writer_A = new ObjectOutputStream(socket_A.getOutputStream());
+                reader_A = new ObjectInputStream(socket_A.getInputStream());
+            } catch (Exception e) {
+                System.err.println(e);
+                System.out.println("ERROR: on socket_A");
+            }
 
             //initialize socket for server_B
-            this.n_B = n_b;
-            this.IP_B = ip_b;
-            socket_B = new Socket(ip_b, PORT);
-            writer_B = new ObjectOutputStream(socket_B.getOutputStream());
-            reader_B = new ObjectInputStream(socket_B.getInputStream());
-
+            try {
+                this.n_B = n_b;
+                this.IP_B = ip_b;
+                socket_B = new Socket(ip_b, PORT);
+                writer_B = new ObjectOutputStream(socket_B.getOutputStream());
+                reader_B = new ObjectInputStream(socket_B.getInputStream());
+            } catch (Exception e) {
+                System.err.println(e);
+                System.out.println("ERROR: on socket_B");
+            }
             serverToTime = new HashMap<Character, Double>();
         } catch (Exception e) {
             System.err.println(e);

@@ -103,7 +103,7 @@ public class Client {
             try {
                 this.n_B = n_b;
                 this.IP_B = ip_b;
-                socket_B = new Socket(ip_b, PORT);
+                socket_B = new Socket(ip_b, PORT+1);
                 writer_B = new ObjectOutputStream(socket_B.getOutputStream());
                 reader_B = new ObjectInputStream(socket_B.getInputStream());
             } catch (Exception e) {
